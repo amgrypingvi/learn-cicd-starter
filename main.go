@@ -4,15 +4,15 @@ import (
 	"database/sql"
 	"embed"
 	"errors"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/cors"
+	"github.com/joho/godotenv"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
-
-	"github.com/go-chi/chi"
-	"github.com/go-chi/cors"
-	"github.com/joho/godotenv"
 
 	"github.com/bootdotdev/learn-cicd-starter/internal/database"
 
@@ -31,12 +31,10 @@ func main() {
 	if err != nil {
 		log.Printf("warning: assuming default configuration. .env unreadable: %v", err)
 	}
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		log.Fatal("PORT environment variable is not set")
+	port, err := strconv.Atoi(os.Getenv("PORT"))
+	if err != nil || port < 1 || port > 65535 {
+		log.Fatalf("PORT environment variable is not set")
 	}
-
 	apiCfg := apiConfig{}
 
 	// https://github.com/libsql/libsql-client-go/#open-a-connection-to-sqld
@@ -91,7 +89,7 @@ func main() {
 
 	router.Mount("/v1", v1Router)
 	srv := &http.Server{
-		Addr:              ":" + port,
+		Addr:              ":" + strconv.Itoa(port),
 		Handler:           router,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
