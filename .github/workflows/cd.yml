@@ -7,6 +7,9 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
     steps:
       - name: Check out code
         uses: actions/checkout@v6
@@ -15,6 +18,9 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: "1.26.0"
+
+      - name: Install Goose
+        run: go install github.com/pressly/goose/v3/cmd/goose@latest
 
       - name: Build an app
         run: sh scripts/buildprod.sh
@@ -26,6 +32,9 @@ jobs:
 
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v3'
+
+      - name: 'Run DB migrations'
+        run: sh scripts/migrateup.sh
 
       - name: Push to Cloud
         run: gcloud builds submit --tag us-central1-docker.pkg.dev/notely-507021/notely-ar-repo/notely:latest
